@@ -1,5 +1,5 @@
-import {createElement} from '../render.js';
 import { POINT_TYPES } from '../const.js';
+import AbstractView from '../framework/view/abstract-view.js';
 
 const createTypeItemsTemplate = (currentType) => POINT_TYPES.map((type) => `
     <div class="event__type-item">
@@ -167,34 +167,53 @@ const createEditingFormTemplate = (point, destination, offers, allDestinations, 
   </form>`;
 };
 
-export default class EditingFormView {
-  constructor({point, destination, offers, allDestinations, allOffers}) {
-    this.point = point;
-    this.destination = destination;
-    this.offers = offers || [];
-    this.allDestinations = allDestinations || [];
-    this.allOffers = allOffers || [];
-    this.element = null;
+export default class EditingFormView extends AbstractView {
+  #point = null;
+  #destination = null;
+  #offers = null;
+  #allDestinations = null;
+  #allOffers = null;
+  #onCloseEditButtonClick = null;
+  #onSubmitButtonClick = null;
+
+  constructor({point,destination, offers, allDestinations, allOffers, onCloseEditButtonClick, onSubmitButtonClick}) {
+    super();
+    this.#point = point;
+    this.#destination = destination;
+    this.#offers = offers;
+    this.#allDestinations = allDestinations || [];
+    this.#allOffers = allOffers || [];
+    this.#onCloseEditButtonClick = onCloseEditButtonClick;
+    this.#onSubmitButtonClick = onSubmitButtonClick;
+
+    this.#setEventListeners();
   }
 
-  getTemplate() {
+  get template() {
     return createEditingFormTemplate(
-      this.point,
-      this.destination,
-      this.offers,
-      this.allDestinations,
-      this.allOffers
+      this.#point,
+      this.#destination,
+      this.#offers,
+      this.#allDestinations,
+      this.#allOffers
     );
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
-    return this.element;
+  #setEventListeners() {
+    this.element
+      .querySelector('.event__rollup-btn')
+      .addEventListener('click', this.#closeClickHandler);
+    this.element
+      .addEventListener('submit', this.#submitHandler);
   }
 
-  removeElement() {
-    this.element = null;
-  }
+  #closeClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#onCloseEditButtonClick();
+  };
+
+  #submitHandler = (evt) => {
+    evt.preventDefault();
+    this.#onSubmitButtonClick();
+  };
 }

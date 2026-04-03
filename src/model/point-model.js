@@ -3,20 +3,20 @@ import { mockPoints } from '../mock/points';
 import {OFFERS_BY_TYPE} from '../mock/offers';
 
 export default class PointsModel {
-  points = mockPoints;
-  destinations = mockDestination;
-  offers = OFFERS_BY_TYPE;
+  #points = mockPoints;
+  #destinations = mockDestination;
+  #offers = OFFERS_BY_TYPE;
 
-  getPoints() {
-    return this.points;
+  get points() {
+    return this.#points;
   }
 
-  getDestinations() {
-    return this.destinations;
+  get destinations() {
+    return this.#destinations;
   }
 
-  getOffers() {
-    return this.offers;
+  get offers() {
+    return this.#offers;
   }
 
   getDestinationById(id) {
