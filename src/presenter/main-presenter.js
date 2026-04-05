@@ -1,26 +1,40 @@
 import EventsListView from '../view/events-list-view.js';
 import EditingFormView from '../view/editing-form-view.js';
 import RoutePointView from '../view/route-point-view.js';
+import NoPointsView from '../view/no-points-view.js';
 import {render, replace} from '../framework/render.js';
+import {filter} from '../filter.js';
 
 export default class MainPresenter {
   #eventsListContainer = null;
   #pointsModel = null;
-
+  #filterModel = null;
   #eventsListComponent = new EventsListView();
 
-  constructor({eventsListContainer, pointsModel}) {
+  constructor({eventsListContainer, pointsModel, filterModel}) {
     this.#eventsListContainer = eventsListContainer;
     this.#pointsModel = pointsModel;
+    this.#filterModel = filterModel;
   }
 
   init() {
+    const filterType = this.#filterModel.filter;
     const eventsListPoints = this.#pointsModel.points;
+
+    const filteredPoints = filter[filterType](eventsListPoints);
+
+    if (filteredPoints.length === 0) {
+      render(
+        new NoPointsView({ filterType }),
+        this.#eventsListContainer
+      );
+      return;
+    }
 
     render(this.#eventsListComponent, this.#eventsListContainer);
 
-    for (let i = 0; i < eventsListPoints.length; i++) {
-      const point = eventsListPoints[i];
+    for (let i = 0; i < filteredPoints.length; i++) {
+      const point = filteredPoints[i];
       const destination = this.#pointsModel.getDestinationById(point.destination);
       const offers = this.#pointsModel.getOffersByIds(point.offers);
 
