@@ -44,5 +44,13 @@ export default class PointsModel {
     const allOffers = this.offers.flatMap((group) => group.offers);
     return allOffers.find((offer) => offer.id === offerId) || null;
   }
+
+  updatePoint(updatedPoint) {
+    this.#points = this.#points.map((point) =>
+      point.id === updatedPoint.id
+        ? updatedPoint
+        : point
+    );
+  }
 }
 

@@ -74,32 +74,58 @@ const createRoutePointTemplate = (point, destination, offers) => {
             </li>`;
 };
 
-export default class RoutePointView extends AbstractView{
+export default class RoutePointView extends AbstractView {
   #point = null;
   #destination = null;
   #offers = null;
   #onOpenEditButtonClick = null;
+  #onFavoriteClick = null;
 
-  constructor({point, destination, offers, onOpenEditButtonClick}) {
+  constructor({
+    point,
+    destination,
+    offers,
+    onOpenEditButtonClick,
+    onFavoriteClick
+  }) {
     super();
+
     this.#point = point;
     this.#destination = destination;
     this.#offers = offers || [];
+
     this.#onOpenEditButtonClick = onOpenEditButtonClick;
+    this.#onFavoriteClick = onFavoriteClick;
 
     this.#setEventListener();
   }
 
   get template() {
-    return createRoutePointTemplate(this.#point, this.#destination, this.#offers);
+    return createRoutePointTemplate(
+      this.#point,
+      this.#destination,
+      this.#offers
+    );
   }
 
   #setEventListener() {
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#openEditButtonClickHandler);
+    this.element
+      .querySelector('.event__rollup-btn')
+      .addEventListener('click', this.#openEditButtonClickHandler);
+
+    this.element
+      .querySelector('.event__favorite-btn')
+      .addEventListener('click', this.#favoriteClickHandler);
   }
 
   #openEditButtonClickHandler = (evt) => {
-    evt.preventDefault(evt);
+    evt.preventDefault();
     this.#onOpenEditButtonClick();
+  };
+
+  #favoriteClickHandler = (evt) => {
+    evt.preventDefault();
+
+    this.#onFavoriteClick();
   };
 }

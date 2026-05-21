@@ -1,15 +1,17 @@
 import EventsListView from '../view/events-list-view.js';
-import EditingFormView from '../view/editing-form-view.js';
-import RoutePointView from '../view/route-point-view.js';
 import NoPointsView from '../view/no-points-view.js';
-import {render, replace} from '../framework/render.js';
+import {render} from '../framework/render.js';
 import {filter} from '../filter.js';
+import PointPresenter from './point-presenter.js';
 
 export default class MainPresenter {
   #eventsListContainer = null;
   #pointsModel = null;
   #filterModel = null;
+
   #eventsListComponent = new EventsListView();
+
+  #pointPresenters = new Map();
 
   constructor({eventsListContainer, pointsModel, filterModel}) {
     this.#eventsListContainer = eventsListContainer;
@@ -21,71 +23,76 @@ export default class MainPresenter {
     const filterType = this.#filterModel.filter;
     const eventsListPoints = this.#pointsModel.points;
 
-    const filteredPoints = filter[filterType](eventsListPoints);
+    const filteredPoints =
+      filter[filterType](eventsListPoints);
 
     if (filteredPoints.length === 0) {
       render(
-        new NoPointsView({ filterType }),
+        new NoPointsView({filterType}),
         this.#eventsListContainer
       );
+
       return;
     }
 
-    render(this.#eventsListComponent, this.#eventsListContainer);
+    render(
+      this.#eventsListComponent,
+      this.#eventsListContainer
+    );
 
-    for (let i = 0; i < filteredPoints.length; i++) {
-      const point = filteredPoints[i];
-      const destination = this.#pointsModel.getDestinationById(point.destination);
-      const offers = this.#pointsModel.getOffersByIds(point.offers);
+    filteredPoints.forEach((point) => {
+      const destination =
+        this.#pointsModel.getDestinationById(
+          point.destination
+        );
 
-      this.#renderPoint(point, destination, offers);
-    }
+      const offers =
+        this.#pointsModel.getOffersByIds(
+          point.offers
+        );
 
-  }
+      const pointPresenter =
+        new PointPresenter({
+          eventsListContainer:
+            this.#eventsListComponent.element,
 
-  #renderPoint(point, destination, offers) {
-    const escKeyDownHandler = (evt) => {
-      if (evt.key === 'Escape') {
-        evt.preventDefault();
-        replaceEditPointToPoint();
-      }
-    };
+          point,
+          destination,
+          offers,
 
-    const onOpenEditButtonClick = () => {
-      replacePointToEditPoint();
-    };
+          allOffers:
+            this.#pointsModel.getOffersByType(
+              point.type
+            ),
 
-    const onCloseEditButtonClick = () => {
-      replaceEditPointToPoint();
-    };
+          allDestinations:
+            this.#pointsModel.destinations,
 
-    const onSubmitButtonClick = () => {
-      replaceEditPointToPoint();
-    };
+          onDataChange:this.#handlePointChange,
+          onModeChange: this.#resetAllPoints
+        });
 
-    const pointComponent = new RoutePointView({point, destination, offers, onOpenEditButtonClick});
+      pointPresenter.init();
 
-    const editPointComponent = new EditingFormView({
-      point,
-      destination,
-      offers,
-      allOffers: this.#pointsModel.getOffersByType(point.type),
-      allDestinations: this.#pointsModel.destinations,
-      onCloseEditButtonClick,
-      onSubmitButtonClick
+      this.#pointPresenters.set(
+        point.id,
+        pointPresenter
+      );
     });
-
-    function replacePointToEditPoint() {
-      replace(editPointComponent, pointComponent);
-      document.addEventListener('keydown', escKeyDownHandler);
-    }
-
-    function replaceEditPointToPoint(){
-      replace(pointComponent, editPointComponent);
-      document.removeEventListener('keydown', escKeyDownHandler);
-    }
-
-    render(pointComponent, this.#eventsListComponent.element);
   }
-}
 
+  #handlePointChange = (updatedPoint) => {
+    this.#pointsModel.updatePoint(updatedPoint);
+
+    const pointPresenter =
+      this.#pointPresenters.get(updatedPoint.id);
+
+    pointPresenter.init(updatedPoint);
+  };
+
+  #resetAllPoints = () => {
+    this.#pointPresenters.forEach((presenter) => {
+      presenter.resetView();
+    });
+  };
+}
