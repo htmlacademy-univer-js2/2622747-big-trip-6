@@ -13,6 +13,5 @@ const filterModel = new FilterModel();
 const eventsListPresenter = new MainPresenter({eventsListContainer: tripEventsSectionElement, pointsModel, filterModel});
 
 render(new FilterView(), tripFiltersElement);
-render(new SortingView(), tripEventsSectionElement);
 
 eventsListPresenter.init();
