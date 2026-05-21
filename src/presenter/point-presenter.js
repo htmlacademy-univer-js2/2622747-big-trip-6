@@ -1,4 +1,4 @@
-import {render, replace} from '../framework/render.js';
+import {render, replace, remove} from '../framework/render.js';
 import RoutePointView from '../view/route-point-view.js';
 import EditingFormView from '../view/editing-form-view.js';
 
@@ -151,4 +151,10 @@ export default class PointPresenter {
       this.#replaceEditPointToPoint();
     }
   };
+
+  destroy() {
+    remove(this.#pointComponent);
+    remove(this.#editPointComponent);
+    document.removeEventListener('keydown', this.#escKeyDownHandler);
+  }
 }
