@@ -1,5 +1,5 @@
 import { POINT_TYPES } from '../const.js';
-import AbstractView from '../framework/view/abstract-view.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 
 const createTypeItemsTemplate = (currentType) => POINT_TYPES.map((type) => `
     <div class="event__type-item">
@@ -22,8 +22,8 @@ const createDestinationsListTemplate = (destinations) => destinations.map((dest)
 
 
 const createAvailableOffersTemplate = (offers, selectedOfferIds) => {
-  if (!offers || offers.length === 0) {
-    return '<p class="event__offers-empty">No additional offers</p>';
+  if (!offers.length) {
+    return '';
   }
 
   return offers.map((offer) => {
@@ -72,7 +72,28 @@ const createDestinationDetailsTemplate = (destination) => {
   `;
 };
 
-const createEditingFormTemplate = (point, destination, offers, allDestinations, allOffers) => {
+const createOffersSectionTemplate = (offers, selectedOfferIds) => {
+
+  if (!offers.length) {
+    return '';
+  }
+
+  return `
+    <section class="event__section event__section--offers">
+
+      <h3 class="event__section-title event__section-title--offers">
+        Offers
+      </h3>
+
+      <div class="event__available-offers">
+        ${createAvailableOffersTemplate(offers, selectedOfferIds)}
+      </div>
+
+    </section>
+  `;
+};
+
+const createEditingFormTemplate = (point, destination, allDestinations, allOffers) => {
   const {type, basePrice, dateFrom, dateTo, offers: selectedOfferIds} = point;
 
   const formatDateForInput = (date) => {
@@ -155,56 +176,83 @@ const createEditingFormTemplate = (point, destination, offers, allDestinations, 
     </header>
 
     <section class="event__details">
-      <section class="event__section  event__section--offers">
-        <h3 class="event__section-title  event__section-title--offers">Offers</h3>
-        <div class="event__available-offers">
-          ${createAvailableOffersTemplate(allOffers, selectedOfferIds)}
-        </div>
-      </section>
+      ${createOffersSectionTemplate(allOffers, selectedOfferIds)}
 
       ${createDestinationDetailsTemplate(destination)}
     </section>
   </form>`;
 };
 
-export default class EditingFormView extends AbstractView {
+export default class EditingFormView extends AbstractStatefulView {
   #point = null;
   #destination = null;
   #offers = null;
   #allDestinations = null;
   #allOffers = null;
+  #allOffersByType = null;
   #onCloseEditButtonClick = null;
   #onSubmitButtonClick = null;
 
-  constructor({point,destination, offers, allDestinations, allOffers, onCloseEditButtonClick, onSubmitButtonClick}) {
+  constructor({
+    point,
+    destination,
+    offers,
+
+    allOffers,
+    allOffersByType,
+
+    allDestinations,
+
+    onCloseEditButtonClick,
+    onSubmitButtonClick
+  }) {
+
     super();
-    this.#point = point;
-    this.#destination = destination;
-    this.#offers = offers;
-    this.#allDestinations = allDestinations || [];
+
+    this._state = {
+      point,
+      destination,
+      offers
+    };
+
     this.#allOffers = allOffers || [];
+    this.#allOffersByType = allOffersByType || [];
+    this.#allDestinations = allDestinations || [];
     this.#onCloseEditButtonClick = onCloseEditButtonClick;
     this.#onSubmitButtonClick = onSubmitButtonClick;
-
     this.#setEventListeners();
   }
 
   get template() {
+
+    const {point, destination} = this._state;
+
     return createEditingFormTemplate(
-      this.#point,
-      this.#destination,
-      this.#offers,
+      point,
+      destination,
       this.#allDestinations,
       this.#allOffers
     );
+
   }
 
   #setEventListeners() {
+
     this.element
       .querySelector('.event__rollup-btn')
       .addEventListener('click', this.#closeClickHandler);
-    this.element
-      .addEventListener('submit', this.#submitHandler);
+
+    this.element.addEventListener('submit', this.#submitHandler);
+
+    this.element.querySelectorAll('.event__type-input')
+      .forEach((input) => {
+
+        input.addEventListener(
+          'change',
+          this.#typeChangeHandler
+        );
+
+      });
   }
 
   #closeClickHandler = (evt) => {
@@ -216,4 +264,29 @@ export default class EditingFormView extends AbstractView {
     evt.preventDefault();
     this.#onSubmitButtonClick();
   };
+
+  #typeChangeHandler = (evt) => {
+
+    const newType = evt.target.value;
+
+    this.#allOffers =
+      this.#allOffersByType.find(
+        (group) =>
+          group.type === newType
+      )?.offers || [];
+
+    this.updateElement({
+
+      point: {
+        ...this._state.point,
+        type: newType,
+        offers: []
+      }
+    });
+
+  };
+
+  _restoreHandlers() {
+    this.#setEventListeners();
+  }
 }
