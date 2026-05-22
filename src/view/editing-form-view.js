@@ -1,5 +1,7 @@
 import { POINT_TYPES } from '../const.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 
 const createTypeItemsTemplate = (currentType) => POINT_TYPES.map((type) => `
     <div class="event__type-item">
@@ -193,6 +195,9 @@ export default class EditingFormView extends AbstractStatefulView {
   #onCloseEditButtonClick = null;
   #onSubmitButtonClick = null;
 
+  #startDatePicker = null;
+  #endDatePicker = null;
+
   constructor({
     point,
     destination,
@@ -210,10 +215,11 @@ export default class EditingFormView extends AbstractStatefulView {
     super();
 
     this._state = {
-      point,
+      point: structuredClone(point),
       destination,
-      offers
+      offers: structuredClone(offers)
     };
+
 
     this.#allOffers = allOffers || [];
     this.#allOffersByType = allOffersByType || [];
@@ -221,15 +227,16 @@ export default class EditingFormView extends AbstractStatefulView {
     this.#onCloseEditButtonClick = onCloseEditButtonClick;
     this.#onSubmitButtonClick = onSubmitButtonClick;
     this.#setEventListeners();
+    this.#initDatePickers();
   }
 
   get template() {
 
-    const {point, destination} = this._state;
+    const {point} = this._state;
 
     return createEditingFormTemplate(
       point,
-      destination,
+      this._state.destination,
       this.#allDestinations,
       this.#allOffers
     );
@@ -286,7 +293,62 @@ export default class EditingFormView extends AbstractStatefulView {
 
   };
 
+  #startDateChangeHandler = ([date]) => {
+    this.updateElement({
+      point: {
+        ...this._state.point,
+        dateFrom: date
+      }
+    });
+  };
+
+  #endDateChangeHandler = ([date]) => {
+    this.updateElement({
+      point: {
+        ...this._state.point,
+        dateTo: date
+      }
+    });
+  };
+
+  #initDatePickers() {
+    this.#startDatePicker = flatpickr(
+      this.element.querySelector('[name="event-start-time"]'),
+      {
+        dateFormat: 'd/m/y H:i',
+        defaultDate: this._state.point.dateFrom,
+        enableTime: true,
+        onClose: this.#startDateChangeHandler
+      }
+    );
+
+    this.#endDatePicker = flatpickr(
+      this.element.querySelector('[name="event-end-time"]'),
+      {
+        dateFormat: 'd/m/y H:i',
+        defaultDate: this._state.point.dateTo,
+        enableTime: true,
+        onClose: this.#endDateChangeHandler
+      }
+    );
+  }
+
+  reset(point) {
+    this._state.point = structuredClone(point);
+    this.updateElement({});
+  }
+
   _restoreHandlers() {
     this.#setEventListeners();
+    this.#initDatePickers();
+  }
+
+  removeElement() {
+    this.#startDatePicker?.destroy();
+    this.#endDatePicker?.destroy();
+    this.#startDatePicker = null;
+    this.#endDatePicker = null;
+
+    super.removeElement();
   }
 }
