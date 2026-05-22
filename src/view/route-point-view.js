@@ -1,4 +1,5 @@
 import AbstractView from '../framework/view/abstract-view.js';
+import dayjs from 'dayjs';
 
 const createSelectedOffers = (offers) => {
   if (!offers || offers.length === 0) {
@@ -15,28 +16,26 @@ const createSelectedOffers = (offers) => {
 
 const createRoutePointTemplate = (point, destination, offers) => {
   const findDuration = (to, from) => {
-    const durationMs = to - from;
-    const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
-    const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-    const durationFull = durationHours > 0
-      ? `${durationHours}H ${durationMinutes}M`
-      : `${durationMinutes}M`;
+    const dur = dayjs(to).diff(dayjs(from), 'minute');
+    const hours = Math.floor(dur / 60);
+    const minutes = dur % 60;
 
-    return durationFull;
+    return hours > 0 ? `${hours}H ${minutes}M` : `${minutes}M`;
   };
 
   const {type, basePrice, dateFrom, dateTo, isFavorite} = point;
 
   const favoriteClass = isFavorite ? 'event__favorite-btn--active' : '';
 
-  const date = new Date(dateFrom);
-  const month = date.toLocaleString('en', {month: 'short'}).toUpperCase();
-  const day = date.getDate().toString().padStart(2, '0');
+  const date = dayjs(dateFrom);
+  const month = date.format('MMM').toUpperCase();
+  const day = date.format('DD');
 
-  const startTime = dateFrom.toLocaleTimeString('en', {hour: '2-digit', minute: '2-digit'});
-  const endTime = dateTo.toLocaleTimeString('en', {hour: '2-digit', minute: '2-digit'});
+  const startTime = date.format('HH:mm');
+  const endTime = dayjs(dateTo).format('HH:mm');
 
   const duration = findDuration(dateTo, dateFrom);
+
   const selectedOffersHtml = createSelectedOffers(offers);
 
   return `<li class="trip-events__item">
