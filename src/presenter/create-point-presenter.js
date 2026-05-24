@@ -126,4 +126,16 @@ export default class CreatePointPresenter {
     this.destroy();
 
   };
+
+  setSaving() {
+
+    this.#pointComponent.setSaving();
+
+  }
+
+  setAborting() {
+
+    this.#pointComponent.setAborting();
+
+  }
 }

@@ -94,7 +94,7 @@ const createOffersSectionTemplate = (offers, selectedOfferIds) => {
   `;
 };
 
-const createEditingFormTemplate = (point, destination, allDestinations, allOffers, isCreating) => {
+const createEditingFormTemplate = (point, destination, allDestinations, allOffers, isCreating, isDisabled, isSaving, isDeleting) => {
   const {type, basePrice, dateFrom, dateTo, offers: selectedOfferIds} = point;
 
   const formatDateForInput = (date) => {
@@ -171,8 +171,13 @@ const createEditingFormTemplate = (point, destination, allDestinations, allOffer
                 placeholder="0">
       </div>
 
-      <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-      <button class="event__reset-btn" type="reset">${isCreating ? 'Cancel' : 'Delete'}</button>
+      <button class="event__save-btn btn btn--blue" type="submit" ${isDisabled ? 'disabled' : ''}>
+        ${isSaving ? 'Saving...' : 'Save'}
+      </button>
+
+      <button class="event__reset-btn" type="reset" ${isDisabled ? 'disabled' : ''}>
+        ${isDeleting ? 'Deleting...' : isCreating ? 'Cancel' : 'Delete'}
+      </button>
       <button class="event__rollup-btn" type="button">
         <span class="visually-hidden">Open event</span>
       </button>
@@ -212,6 +217,7 @@ export default class EditingFormView extends AbstractStatefulView {
     onSubmitButtonClick,
     onDeleteClick,
     isCreating = false
+
   }) {
 
     super();
@@ -220,7 +226,11 @@ export default class EditingFormView extends AbstractStatefulView {
       point: structuredClone(point),
       destination,
       offers: structuredClone(offers),
-      isCreating
+      isCreating,
+
+      isDisabled: false,
+      isSaving: false,
+      isDeleting: false
     };
 
     this.#allOffers = allOffers || [];
@@ -234,8 +244,14 @@ export default class EditingFormView extends AbstractStatefulView {
   }
 
   get template() {
-    const {point} = this._state;
-    const destination = this._state.destination;
+    const {
+      point,
+      destination,
+      isCreating,
+      isDisabled,
+      isSaving,
+      isDeleting
+    } = this._state;
 
     const currentOffers = this.#allOffersByType.find((group) => group.type === point.type)?.offers || [];
 
@@ -244,7 +260,10 @@ export default class EditingFormView extends AbstractStatefulView {
       destination,
       this.#allDestinations,
       currentOffers,
-      this._state.isCreating
+      isCreating,
+      isDisabled,
+      isSaving,
+      isDeleting
     );
   }
 
@@ -425,6 +444,38 @@ export default class EditingFormView extends AbstractStatefulView {
     this.#endDatePicker = null;
 
     super.removeElement();
+  }
+
+  setSaving() {
+
+    this.updateElement({
+      isDisabled: true,
+      isSaving: true
+    });
+
+  }
+
+  setDeleting() {
+
+    this.updateElement({
+      isDisabled: true,
+      isDeleting: true
+    });
+
+  }
+
+  setAborting() {
+
+    const resetState = {
+      isDisabled: false,
+      isSaving: false,
+      isDeleting: false
+    };
+
+    this.updateElement(resetState);
+
+    this.shake(resetState);
+
   }
 }
 

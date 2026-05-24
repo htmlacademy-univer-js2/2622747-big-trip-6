@@ -142,29 +142,71 @@ export default class MainPresenter {
 
   };
 
-  #handlePointChange = async (actionType, updatedPoint) => {
+  #handlePointChange = async (
+    actionType,
+    updatedPoint
+  ) => {
 
-    switch (actionType) {
-      case UserAction.UPDATE_POINT:
-        await this.#pointsModel.updatePoint(updatedPoint);
-        break;
+    try {
 
-      case UserAction.DELETE_POINT:
-        await this.#pointsModel.deletePoint(updatedPoint);
-        this.#pointPresenters.get(updatedPoint.id)?.destroy();
-        this.#pointPresenters.delete(updatedPoint.id);
-        break;
+      switch (actionType) {
 
-      case UserAction.ADD_POINT:
-        await this.#pointsModel.addPoint(updatedPoint);
+        case UserAction.UPDATE_POINT:
 
-        this.#createPointPresenter?.destroy();
-        this.#createPointPresenter = null;
+          this.#pointPresenters
+            .get(updatedPoint.id)
+            ?.setSaving();
 
-        this.#clearPoints();
-        this.#renderPoints();
+          await this.#pointsModel
+            .updatePoint(updatedPoint);
 
-        break;
+          break;
+
+        case UserAction.DELETE_POINT:
+
+          this.#pointPresenters
+            .get(updatedPoint.id)
+            ?.setDeleting();
+
+          await this.#pointsModel
+            .deletePoint(updatedPoint);
+
+          break;
+
+        case UserAction.ADD_POINT:
+
+          this.#createPointPresenter
+            ?.setSaving();
+
+          await this.#pointsModel
+            .addPoint(updatedPoint);
+
+          break;
+
+      }
+
+    } catch {
+
+      switch (actionType) {
+
+        case UserAction.UPDATE_POINT:
+        case UserAction.DELETE_POINT:
+
+          this.#pointPresenters
+            .get(updatedPoint.id)
+            ?.setAborting();
+
+          break;
+
+        case UserAction.ADD_POINT:
+
+          this.#createPointPresenter
+            ?.setAborting();
+
+          break;
+
+      }
+
     }
 
   };
