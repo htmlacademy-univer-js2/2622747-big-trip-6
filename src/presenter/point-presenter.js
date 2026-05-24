@@ -206,4 +206,26 @@ export default class PointPresenter {
       this.#replaceEditToPoint();
     }
   };
+
+  setSaving() {
+
+    if (this.#mode === 'EDITING') {
+      this.#editPointComponent.setSaving();
+    }
+
+  }
+
+  setDeleting() {
+
+    if (this.#mode === 'EDITING') {
+      this.#editPointComponent.setDeleting();
+    }
+
+  }
+
+  setAborting() {
+
+    this.#editPointComponent.setAborting();
+
+  }
 }
