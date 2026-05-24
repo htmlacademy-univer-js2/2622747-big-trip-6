@@ -1,5 +1,4 @@
-import {FilterType} from './model/filter-model.js';
-
+import { FilterType } from './const.js';
 const isFuture = (dateFrom) => dateFrom > new Date();
 const isPast = (dateTo) => dateTo < new Date();
 const isPresent = (dateFrom, dateTo) => dateFrom <= new Date() && dateTo >= new Date();
