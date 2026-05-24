@@ -92,6 +92,29 @@ export default class PointsModel extends Observable {
 
   }
 
+  async addPoint(point) {
+    const newPoint = await this.#apiService.createPoint(point);
+
+    this.#points = [
+      newPoint,
+      ...this.#points
+    ];
+
+    this._notify();
+
+    return newPoint;
+  }
+
+  async deletePoint(point) {
+    await this.#apiService.deletePoint(point);
+
+    this.#points = this.#points.filter(
+      (p) => p.id !== point.id
+    );
+
+    this._notify();
+  }
+
   getDestinationById(id) {
 
     return this.#destinations.find(

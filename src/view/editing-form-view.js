@@ -364,7 +364,7 @@ export default class EditingFormView extends AbstractStatefulView {
     this.updateElement({
       point: {
         ...this._state.point,
-        destination: selectedDestination?.id || ''
+        destination: selectedDestination?.id || null
       },
       destination: selectedDestination || null
     });

@@ -44,4 +44,31 @@ export default class BigTripApi extends ApiService {
 
     return ApiService.parseResponse(response);
   }
+
+  async createPoint(point) {
+    console.log('SENDING TO SERVER:', PointAdapter.adaptToServer(point));
+    const response = await this._load({
+      url: 'points',
+      method: 'POST',
+      body: JSON.stringify(
+        PointAdapter.adaptToServer(point)
+      ),
+      headers: new Headers({
+        'Content-Type': 'application/json'
+      })
+    });
+
+    return PointAdapter.adaptToClient(
+      await ApiService.parseResponse(response)
+    );
+  }
+
+  async deletePoint(point) {
+    const response = await this._load({
+      url: `points/${point.id}`,
+      method: 'DELETE'
+    });
+
+    return response;
+  }
 }

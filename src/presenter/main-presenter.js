@@ -41,9 +41,6 @@ export default class MainPresenter {
   }
 
   init() {
-
-    //this.#renderSort();
-
     render(
       this.#eventsListComponent,
       this.#eventsListContainer
@@ -53,7 +50,6 @@ export default class MainPresenter {
       this.#loadingComponent,
       this.#eventsListComponent.element
     );
-    //this.#renderPoints();
   }
 
   #getPoints() {
@@ -154,13 +150,13 @@ export default class MainPresenter {
         break;
 
       case UserAction.DELETE_POINT:
-        this.#pointsModel.deletePoint(updatedPoint);
-        this.#clearPoints();
-        this.#renderPoints();
+        await this.#pointsModel.deletePoint(updatedPoint);
+        this.#pointPresenters.get(updatedPoint.id)?.destroy();
+        this.#pointPresenters.delete(updatedPoint.id);
         break;
 
       case UserAction.ADD_POINT:
-        this.#pointsModel.addPoint(updatedPoint);
+        await this.#pointsModel.addPoint(updatedPoint);
 
         this.#createPointPresenter?.destroy();
         this.#createPointPresenter = null;

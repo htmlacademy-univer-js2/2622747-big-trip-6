@@ -9,7 +9,7 @@ export default class PointAdapter {
       dateTo: point.date_to ? new Date(point.date_to) : null,
       destination: point.destination,
       isFavorite: point.is_favorite,
-      offers: point.offers,
+      offers: point.offers || [],
       type: point.type
     };
 
@@ -17,13 +17,12 @@ export default class PointAdapter {
 
   static adaptToServer(point) {
     return {
-      'id': point.id,
       'base_price': Number(point.basePrice),
       'date_from': point.dateFrom.toISOString(),
       'date_to': point.dateTo.toISOString(),
-      'destination': point.destination,
-      'is_favorite': point.isFavorite,
-      'offers': point.offers,
+      'destination': String(point.destination),
+      'is_favorite': Boolean(point.isFavorite),
+      'offers': point.offers.map(String),
       'type': point.type
     };
   }

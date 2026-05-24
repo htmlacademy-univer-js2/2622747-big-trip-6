@@ -7,7 +7,7 @@ const createBlankPoint = () => ({
   basePrice: 0,
   dateFrom: new Date(),
   dateTo: new Date(),
-  destination: '',
+  destination: null,
   isFavorite: false,
   offers: [],
   type: 'taxi'
@@ -94,16 +94,17 @@ export default class CreatePointPresenter {
 
   };
 
-  #handleSubmit = (
-    point
-  ) => {
+  #handleSubmit = (point) => {
+    const normalizedPoint = {
+      ...point,
+      basePrice: Number(point.basePrice),
+      destination: String(point.destination),
+      offers: point.offers || [],
+    };
 
     this.#onDataChange(
-
       UserAction.ADD_POINT,
-
-      point
-
+      normalizedPoint
     );
 
     this.destroy();
