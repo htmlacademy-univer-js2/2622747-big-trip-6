@@ -3,6 +3,7 @@ import {render, remove} from '../framework/render.js';
 import EventsListView from '../view/events-list-view.js';
 import NoPointsView from '../view/no-points-view.js';
 import SortingView from '../view/sorting-view.js';
+import LoadingView from '../view/loading-view.js';
 
 import PointPresenter from './point-presenter.js';
 import CreatePointPresenter from './create-point-presenter.js';
@@ -26,6 +27,9 @@ export default class MainPresenter {
   #currentSortType = 'day';
   #createPointPresenter = null;
 
+  #loadingComponent = new LoadingView();
+  #isLoading = true;
+
   constructor({eventsListContainer, pointsModel, filterModel, newEventButton}) {
     this.#eventsListContainer = eventsListContainer;
     this.#pointsModel = pointsModel;
@@ -33,6 +37,7 @@ export default class MainPresenter {
 
     this.#filterModel.addObserver(this.#handleModelEvent);
     newEventButton.addEventListener('click',this.#handleNewPointClick);
+    this.#pointsModel.addObserver(this.#handleModelEvent);
   }
 
   init() {
@@ -44,7 +49,11 @@ export default class MainPresenter {
       this.#eventsListContainer
     );
 
-    this.#renderPoints();
+    render(
+      this.#loadingComponent,
+      this.#eventsListComponent.element
+    );
+    //this.#renderPoints();
   }
 
   #getPoints() {
@@ -78,6 +87,10 @@ export default class MainPresenter {
   }
 
   #renderPoints() {
+    if (this.#isLoading) {
+      return;
+    }
+
     this.#renderSort();
     const points = this.#getPoints();
 
@@ -133,12 +146,11 @@ export default class MainPresenter {
 
   };
 
-  #handlePointChange = (actionType, updatedPoint) => {
+  #handlePointChange = async (actionType, updatedPoint) => {
 
     switch (actionType) {
       case UserAction.UPDATE_POINT:
-        this.#pointsModel.updatePoint(updatedPoint);
-        this.#pointPresenters.get(updatedPoint.id).init(updatedPoint);
+        await this.#pointsModel.updatePoint(updatedPoint);
         break;
 
       case UserAction.DELETE_POINT:
@@ -174,6 +186,8 @@ export default class MainPresenter {
   };
 
   #handleModelEvent = () => {
+    this.#isLoading = false;
+    remove(this.#loadingComponent);
     this.#currentSortType = 'day';
 
     this.#clearPoints();
