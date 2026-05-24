@@ -7,8 +7,30 @@ export default class PointsModel {
   #destinations = mockDestination;
   #offers = OFFERS_BY_TYPE;
 
-  get points() {
+  getPoints() {
     return this.#points;
+  }
+
+  setPoints(points) {
+    this.#points = points;
+  }
+
+  addPoint(newPoint) {
+    this.#points = [newPoint,...this.#points];
+  }
+
+  deletePoint(pointToDelete) {
+    this.#points = this.#points.filter((point) =>
+      point.id !== pointToDelete.id
+    );
+  }
+
+  updatePoint(updatedPoint) {
+    this.#points = this.#points.map((point) =>
+      point.id === updatedPoint.id
+        ? updatedPoint
+        : point
+    );
   }
 
   get destinations() {
@@ -43,14 +65,6 @@ export default class PointsModel {
     }
     const allOffers = this.offers.flatMap((group) => group.offers);
     return allOffers.find((offer) => offer.id === offerId) || null;
-  }
-
-  updatePoint(updatedPoint) {
-    this.#points = this.#points.map((point) =>
-      point.id === updatedPoint.id
-        ? updatedPoint
-        : point
-    );
   }
 }
 

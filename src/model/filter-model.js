@@ -1,11 +1,5 @@
 import Observable from '../framework/observable.js';
-
-export const FilterType = {
-  EVERYTHING: 'everything',
-  FUTURE: 'future',
-  PRESENT: 'present',
-  PAST: 'past',
-};
+import { FilterType } from '../const.js';
 
 export default class FilterModel extends Observable {
   #filter = FilterType.EVERYTHING;
@@ -14,8 +8,12 @@ export default class FilterModel extends Observable {
     return this.#filter;
   }
 
-  setFilter(updateType, filter) {
-    this.#filter = filter;
-    this._notify(updateType, filter);
+  setFilter(updateType) {
+    if (this.#filter === updateType) {
+      return;
+    }
+
+    this.#filter = updateType;
+    this._notify();
   }
 }

@@ -22,7 +22,6 @@ const createDestinationsListTemplate = (destinations) => destinations.map((dest)
     <option value="${dest.name}"></option>
   `).join('');
 
-
 const createAvailableOffersTemplate = (offers, selectedOfferIds) => {
   if (!offers.length) {
     return '';
@@ -95,7 +94,7 @@ const createOffersSectionTemplate = (offers, selectedOfferIds) => {
   `;
 };
 
-const createEditingFormTemplate = (point, destination, allDestinations, allOffers) => {
+const createEditingFormTemplate = (point, destination, allDestinations, allOffers, isCreating) => {
   const {type, basePrice, dateFrom, dateTo, offers: selectedOfferIds} = point;
 
   const formatDateForInput = (date) => {
@@ -162,16 +161,18 @@ const createEditingFormTemplate = (point, destination, allDestinations, allOffer
           <span class="visually-hidden">Price</span>
           &euro;
         </label>
-        <input class="event__input  event__input--price"
-               id="event-price-1"
-               type="text"
-               name="event-price"
-               value="${basePrice}"
-               placeholder="0">
+        <input class="event__input event__input--price"
+                id="event-price-1"
+                type="number"
+                name="event-price"
+                value="${basePrice}"
+                min="0"
+                step="1"
+                placeholder="0">
       </div>
 
       <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-      <button class="event__reset-btn" type="reset">Delete</button>
+      <button class="event__reset-btn" type="reset">${isCreating ? 'Cancel' : 'Delete'}</button>
       <button class="event__rollup-btn" type="button">
         <span class="visually-hidden">Open event</span>
       </button>
@@ -198,18 +199,19 @@ export default class EditingFormView extends AbstractStatefulView {
   #startDatePicker = null;
   #endDatePicker = null;
 
+  #onDeleteClick = null;
+
   constructor({
     point,
     destination,
     offers,
-
     allOffers,
     allOffersByType,
-
     allDestinations,
-
     onCloseEditButtonClick,
-    onSubmitButtonClick
+    onSubmitButtonClick,
+    onDeleteClick,
+    isCreating = false
   }) {
 
     super();
@@ -217,30 +219,33 @@ export default class EditingFormView extends AbstractStatefulView {
     this._state = {
       point: structuredClone(point),
       destination,
-      offers: structuredClone(offers)
+      offers: structuredClone(offers),
+      isCreating
     };
-
 
     this.#allOffers = allOffers || [];
     this.#allOffersByType = allOffersByType || [];
     this.#allDestinations = allDestinations || [];
     this.#onCloseEditButtonClick = onCloseEditButtonClick;
     this.#onSubmitButtonClick = onSubmitButtonClick;
+    this.#onDeleteClick = onDeleteClick;
     this.#setEventListeners();
     this.#initDatePickers();
   }
 
   get template() {
-
     const {point} = this._state;
+    const destination = this._state.destination;
+
+    const currentOffers = this.#allOffersByType.find((group) => group.type === point.type)?.offers || [];
 
     return createEditingFormTemplate(
       point,
-      this._state.destination,
+      destination,
       this.#allDestinations,
-      this.#allOffers
+      currentOffers,
+      this._state.isCreating
     );
-
   }
 
   #setEventListeners() {
@@ -260,37 +265,72 @@ export default class EditingFormView extends AbstractStatefulView {
         );
 
       });
+
+    this.element
+      .querySelector('.event__reset-btn')
+      .addEventListener('click', this.#deleteClickHandler);
+
+    this.element
+      .querySelector(
+        '.event__input--destination'
+      )
+      .addEventListener(
+        'change',
+        this.#destinationChangeHandler
+      );
+
+    this.element
+      .querySelector('.event__input--price')
+      .addEventListener(
+        'input',
+        this.#priceChangeHandler
+      );
   }
 
   #closeClickHandler = (evt) => {
     evt.preventDefault();
-    this.#onCloseEditButtonClick();
+    this.#onCloseEditButtonClick(this._state.point);
   };
 
   #submitHandler = (evt) => {
     evt.preventDefault();
-    this.#onSubmitButtonClick();
+
+    const destinationInput =
+      this.element.querySelector(
+        '.event__input--destination'
+      ).value;
+
+    const isDestinationValid =
+      this.#allDestinations.some(
+        (destination) =>
+          destination.name === destinationInput
+      );
+
+    if (!isDestinationValid) {
+      return;
+    }
+
+    const updatedPoint = {
+      ...this._state.point,
+      offers: this.#collectOffers()
+    };
+
+    this.#onSubmitButtonClick(
+      updatedPoint
+    );
   };
 
   #typeChangeHandler = (evt) => {
 
     const newType = evt.target.value;
 
-    this.#allOffers =
-      this.#allOffersByType.find(
-        (group) =>
-          group.type === newType
-      )?.offers || [];
-
     this.updateElement({
-
       point: {
         ...this._state.point,
         type: newType,
         offers: []
       }
     });
-
   };
 
   #startDateChangeHandler = ([date]) => {
@@ -310,6 +350,41 @@ export default class EditingFormView extends AbstractStatefulView {
       }
     });
   };
+
+  #deleteClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#onDeleteClick(this._state.point);
+  };
+
+  #destinationChangeHandler = (evt) => {
+    const selectedDestination = this.#allDestinations.find((destination) =>
+      destination.name === evt.target.value
+    );
+
+    this.updateElement({
+      point: {
+        ...this._state.point,
+        destination: selectedDestination?.id || ''
+      },
+      destination: selectedDestination || null
+    });
+  };
+
+  #priceChangeHandler = (evt) => {
+    const value = evt.target.value.replace(/\D/g, '');
+
+    this.updateElement({
+      point: {
+        ...this._state.point,
+        basePrice: Number(value)
+      }
+    });
+  };
+
+  #collectOffers() {
+    const checkedInputs = this.element.querySelectorAll('.event__offer-checkbox:checked');
+    return Array.from(checkedInputs).map((input) => input.value);
+  }
 
   #initDatePickers() {
     this.#startDatePicker = flatpickr(
@@ -352,3 +427,5 @@ export default class EditingFormView extends AbstractStatefulView {
     super.removeElement();
   }
 }
+
+

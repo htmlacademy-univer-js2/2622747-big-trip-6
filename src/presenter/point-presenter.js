@@ -1,6 +1,7 @@
 import {render, replace, remove} from '../framework/render.js';
 import RoutePointView from '../view/route-point-view.js';
 import EditingFormView from '../view/editing-form-view.js';
+import { UserAction } from '../const.js';
 
 export default class PointPresenter {
 
@@ -52,6 +53,8 @@ export default class PointPresenter {
       this.#point = updatedPoint;
     }
 
+    this.#updateViewData();
+
     const prevPoint = this.#pointComponent;
 
     const prevEdit = this.#editPointComponent;
@@ -70,11 +73,12 @@ export default class PointPresenter {
         point: this.#point,
         destination: this.#destination,
         offers: this.#offers,
-        allOffers: this.#allOffers,
+        allOffers: this.#allOffersByType[this.#point.type] || [],
         allOffersByType: this.#allOffersByType,
         allDestinations: this.#allDestinations,
         onCloseEditButtonClick: this.#handleCloseEditClick,
-        onSubmitButtonClick: this.#handleFormSubmit
+        onSubmitButtonClick: this.#handleFormSubmit,
+        onDeleteClick: this.#handleDeleteClick
       });
 
     if (prevPoint === null || prevEdit === null) {
@@ -89,15 +93,21 @@ export default class PointPresenter {
       return;
     }
 
-    replace(
-      this.#pointComponent,
-      prevPoint
-    );
+    if (this.#mode === 'DEFAULT') {
 
-    replace(
-      this.#editPointComponent,
-      prevEdit
-    );
+      replace(
+        this.#pointComponent,
+        prevPoint
+      );
+
+    } else {
+
+      replace(
+        this.#editPointComponent,
+        prevEdit
+      );
+
+    }
 
     remove(prevPoint);
     remove(prevEdit);
@@ -126,6 +136,21 @@ export default class PointPresenter {
 
   }
 
+  #updateViewData() {
+    this.#destination =
+      this.#allDestinations.find((d) => d.id === this.#point.destination) || null;
+
+    const offersGroup = this.#allOffersByType.find(
+      (group) => group.type === this.#point.type
+    );
+
+    this.#offers = (offersGroup?.offers || [])
+      .filter((offer) =>
+        (this.#point.offers || [])
+          .includes(offer.id)
+      );
+  }
+
   #replacePointToEdit() {
     replace(this.#editPointComponent, this.#pointComponent);
     this.#mode = 'EDITING';
@@ -151,14 +176,28 @@ export default class PointPresenter {
   };
 
   #handleFavoriteClick = () => {
-    this.#onDataChange({
+    this.#onDataChange(UserAction.UPDATE_POINT,{
       ...this.#point,
       isFavorite: !this.#point.isFavorite
     });
   };
 
-  #handleFormSubmit = () => {
+  #handleFormSubmit = (updatedPoint) => {
+
+    this.#onDataChange(
+      UserAction.UPDATE_POINT,
+      updatedPoint
+    );
+
     this.#replaceEditToPoint();
+
+  };
+
+  #handleDeleteClick = () => {
+    this.#onDataChange(
+      UserAction.DELETE_POINT,
+      this.#point
+    );
   };
 
   #escKeyDownHandler = (evt) => {
