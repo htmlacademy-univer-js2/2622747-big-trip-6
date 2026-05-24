@@ -27,14 +27,21 @@ const createRoutePointTemplate = (point, destination, offers) => {
 
   const favoriteClass = isFavorite ? 'event__favorite-btn--active' : '';
 
-  const date = dayjs(dateFrom);
-  const month = date.format('MMM').toUpperCase();
-  const day = date.format('DD');
+  const date = dateFrom ? dayjs(dateFrom) : null;
 
-  const startTime = date.format('HH:mm');
-  const endTime = dayjs(dateTo).format('HH:mm');
+  const month = date ? date.format('MMM').toUpperCase() : '';
+  const day = date ? date.format('DD') : '';
 
-  const duration = findDuration(dateTo, dateFrom);
+  const startTime =
+    dateFrom ? dayjs(dateFrom).format('HH:mm') : '';
+
+  const endTime =
+    dateTo ? dayjs(dateTo).format('HH:mm') : '';
+
+  const duration =
+    dateFrom && dateTo
+      ? findDuration(dateTo, dateFrom)
+      : '';
 
   const selectedOffersHtml = createSelectedOffers(offers);
   const destinationName =
@@ -42,16 +49,16 @@ const createRoutePointTemplate = (point, destination, offers) => {
 
   return `<li class="trip-events__item">
               <div class="event">
-                <time class="event__date" datetime="${dateFrom.toISOString().slice(0, 10)}">${month} ${day}</time>
+                <time class="event__date" datetime="${dateFrom ? dateFrom.toISOString().slice(0, 10) : ''}">${month} ${day}</time>
                 <div class="event__type">
                   <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
                 </div>
                 <h3 class="event__title">${type} ${destinationName}</h3>
                 <div class="event__schedule">
                   <p class="event__time">
-                    <time class="event__start-time" datetime="${dateFrom.toISOString()}">${startTime}</time>
+                    <time class="event__start-time" datetime="${dateFrom ? dateFrom.toISOString() : ''}">${startTime}</time>
                     &mdash;
-                    <time class="event__end-time" datetime="${dateTo.toISOString()}">${endTime}</time>
+                    <time class="event__end-time" datetime="${dateTo ? dateTo.toISOString() : ''}">${endTime}</time>
                   </p>
                   <p class="event__duration">${duration}</p>
                 </div>

@@ -1,70 +1,128 @@
-import { mockDestination } from '../mock/destinations';
-import { mockPoints } from '../mock/points';
-import {OFFERS_BY_TYPE} from '../mock/offers';
+import Observable from '../framework/observable.js';
+import PointAdapter from '../point-adapter.js';
 
-export default class PointsModel {
-  #points = mockPoints;
-  #destinations = mockDestination;
-  #offers = OFFERS_BY_TYPE;
+export default class PointsModel extends Observable {
+
+  #apiService = null;
+
+  #points = [];
+  #offers = [];
+  #destinations = [];
+
+  constructor({apiService}) {
+
+    super();
+
+    this.#apiService = apiService;
+
+  }
 
   getPoints() {
     return this.#points;
-  }
-
-  setPoints(points) {
-    this.#points = points;
-  }
-
-  addPoint(newPoint) {
-    this.#points = [newPoint,...this.#points];
-  }
-
-  deletePoint(pointToDelete) {
-    this.#points = this.#points.filter((point) =>
-      point.id !== pointToDelete.id
-    );
-  }
-
-  updatePoint(updatedPoint) {
-    this.#points = this.#points.map((point) =>
-      point.id === updatedPoint.id
-        ? updatedPoint
-        : point
-    );
-  }
-
-  get destinations() {
-    return this.#destinations;
   }
 
   get offers() {
     return this.#offers;
   }
 
+  get destinations() {
+    return this.#destinations;
+  }
+
+  async init() {
+
+    try {
+
+      const [
+        points,
+        destinations,
+        offers
+      ] = await Promise.all([
+
+        this.#apiService.points(),
+        this.#apiService.destinations(),
+        this.#apiService.offers()
+
+      ]);
+
+      this.#points = points;
+
+      this.#offers =
+        offers;
+
+      this.#destinations =
+        destinations;
+
+    } catch {
+
+      this.#points = [];
+      this.#offers = [];
+      this.#destinations = [];
+
+    }
+
+    this._notify();
+
+  }
+
+  async updatePoint(updatedPoint) {
+
+    const response =
+      await this.#apiService.updatePoint(updatedPoint);
+
+    const savedPoint =
+      PointAdapter.adaptToClient(response);
+
+    const index =
+      this.#points.findIndex(
+        (point) => point.id === savedPoint.id
+      );
+
+    if (index === -1) {
+      throw new Error('Point not found');
+    }
+
+    this.#points = [
+      ...this.#points.slice(0, index),
+      savedPoint,
+      ...this.#points.slice(index + 1)
+    ];
+
+    this._notify();
+
+  }
+
   getDestinationById(id) {
-    return this.destinations.find((destination) => destination.id === id);
+
+    return this.#destinations.find(
+      (destination) =>
+        destination.id === id
+    );
+
   }
 
   getOffersByType(type) {
-    const offerGroup = this.offers.find((group) => group.type === type);
-    return offerGroup ? offerGroup.offers : [];
+
+    return this.#offers.find(
+      (offer) =>
+        offer.type === type
+    )?.offers || [];
+
   }
 
-  getOffersByIds(offerIds) {
-    if (!offerIds || offerIds.length === 0) {
-      return [];
-    }
+  getOffersByIds(ids = []) {
 
-    const allOffers = this.offers.flatMap((group) => group.offers);
-    return allOffers.filter((offer) => offerIds.includes(offer.id));
+    const offers =
+      this.#offers.flatMap(
+        (group) => group.offers
+      );
+
+    return offers.filter(
+      (offer) =>
+        ids.includes(offer.id)
+    );
+
   }
 
-  getOfferById(offerId) {
-    if (!offerId) {
-      return null;
-    }
-    const allOffers = this.offers.flatMap((group) => group.offers);
-    return allOffers.find((offer) => offer.id === offerId) || null;
-  }
 }
 
