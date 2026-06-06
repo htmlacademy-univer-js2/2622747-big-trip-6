@@ -95,6 +95,7 @@ export default class CreatePointPresenter {
   };
 
   #handleSubmit = (point) => {
+
     const normalizedPoint = {
       ...point,
       basePrice: Number(point.basePrice),
@@ -107,17 +108,11 @@ export default class CreatePointPresenter {
       normalizedPoint
     );
 
-    this.destroy();
-
   };
 
-  #escKeyDownHandler = (
-    evt
-  ) => {
+  #escKeyDownHandler = (evt) => {
 
-    if (
-      evt.key !== 'Escape'
-    ) {
+    if (evt.key !== 'Escape') {
       return;
     }
 

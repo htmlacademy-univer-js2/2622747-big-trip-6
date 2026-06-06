@@ -9,6 +9,8 @@ export default class PointsModel extends Observable {
   #offers = [];
   #destinations = [];
 
+  #error = false;
+
   constructor({apiService}) {
 
     super();
@@ -46,18 +48,18 @@ export default class PointsModel extends Observable {
       ]);
 
       this.#points = points;
+      this.#offers = offers;
+      this.#destinations = destinations;
 
-      this.#offers =
-        offers;
-
-      this.#destinations =
-        destinations;
-
-    } catch {
+    } catch (error){
 
       this.#points = [];
       this.#offers = [];
       this.#destinations = [];
+
+      this.#error = true;
+      this._notify();
+      return;
 
     }
 
@@ -74,9 +76,7 @@ export default class PointsModel extends Observable {
       PointAdapter.adaptToClient(response);
 
     const index =
-      this.#points.findIndex(
-        (point) => point.id === savedPoint.id
-      );
+      this.#points.findIndex((point) => point.id === savedPoint.id);
 
     if (index === -1) {
       throw new Error('Point not found');
@@ -108,27 +108,21 @@ export default class PointsModel extends Observable {
   async deletePoint(point) {
     await this.#apiService.deletePoint(point);
 
-    this.#points = this.#points.filter(
-      (p) => p.id !== point.id
-    );
+    this.#points = this.#points.filter((p) => p.id !== point.id);
 
     this._notify();
   }
 
   getDestinationById(id) {
 
-    return this.#destinations.find(
-      (destination) =>
-        destination.id === id
-    );
+    return this.#destinations.find((destination) => destination.id === id);
 
   }
 
   getOffersByType(type) {
 
-    return this.#offers.find(
-      (offer) =>
-        offer.type === type
+    return this.#offers.find((offer) =>
+      offer.type === type
     )?.offers || [];
 
   }
@@ -144,8 +138,10 @@ export default class PointsModel extends Observable {
       (offer) =>
         ids.includes(offer.id)
     );
-
   }
 
+  isError() {
+    return this.#error;
+  }
 }
 
