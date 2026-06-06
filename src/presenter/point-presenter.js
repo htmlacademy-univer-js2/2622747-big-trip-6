@@ -137,6 +137,7 @@ export default class PointPresenter {
   }
 
   #updateViewData() {
+
     this.#destination =
       this.#allDestinations.find((d) => d.id === this.#point.destination) || null;
 
@@ -149,9 +150,11 @@ export default class PointPresenter {
         (this.#point.offers || [])
           .includes(offer.id)
       );
+
   }
 
   #replacePointToEdit() {
+
     replace(this.#editPointComponent, this.#pointComponent);
     this.#mode = 'EDITING';
     document.addEventListener('keydown', this.#escKeyDownHandler);
@@ -159,6 +162,7 @@ export default class PointPresenter {
   }
 
   #replaceEditToPoint() {
+
     this.#editPointComponent.reset(this.#point);
     replace(this.#pointComponent,this.#editPointComponent);
     this.#mode = 'DEFAULT';
@@ -167,19 +171,25 @@ export default class PointPresenter {
   }
 
   #handleOpenEditClick = () => {
+
     this.#onModeChange(this);
     this.#replacePointToEdit();
+
   };
 
   #handleCloseEditClick = () => {
+
     this.#replaceEditToPoint();
+
   };
 
   #handleFavoriteClick = () => {
+
     this.#onDataChange(UserAction.UPDATE_POINT,{
       ...this.#point,
       isFavorite: !this.#point.isFavorite
     });
+
   };
 
   #handleFormSubmit = (updatedPoint) => {
@@ -189,7 +199,7 @@ export default class PointPresenter {
       updatedPoint
     );
 
-    this.#replaceEditToPoint();
+    //this.#replaceEditToPoint();
 
   };
 

@@ -46,7 +46,7 @@ export default class BigTripApi extends ApiService {
   }
 
   async createPoint(point) {
-    console.log('SENDING TO SERVER:', PointAdapter.adaptToServer(point));
+
     const response = await this._load({
       url: 'points',
       method: 'POST',

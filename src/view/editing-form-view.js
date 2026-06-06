@@ -1,9 +1,9 @@
-import { POINT_TYPES } from '../const.js';
+import { PointTypes } from '../const.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 
-const createTypeItemsTemplate = (currentType) => POINT_TYPES.map((type) => `
+const createTypeItemsTemplate = (currentType) => PointTypes.map((type) => `
     <div class="event__type-item">
       <input id="event-type-${type}-1"
              class="event__type-input  visually-hidden"
@@ -49,7 +49,7 @@ const createAvailableOffersTemplate = (offers, selectedOfferIds) => {
 };
 
 const createDestinationDetailsTemplate = (destination) => {
-  if (!destination) {
+  if (!destination || !destination.description) {
     return '';
   }
 
@@ -60,7 +60,10 @@ const createDestinationDetailsTemplate = (destination) => {
   return `
     <section class="event__section  event__section--destination">
       <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-      <p class="event__destination-description">${destination.description || ''}</p>
+
+      <p class="event__destination-description">
+        ${destination.description}
+      </p>
 
       ${picturesHtml ? `
         <div class="event__photos-container">
@@ -106,6 +109,14 @@ const createEditingFormTemplate = (point, destination, allDestinations, allOffer
     const minutes = data.getMinutes().toString().padStart(2, '0');
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
+
+  let resetButtonText = 'Delete';
+
+  if (isDeleting) {
+    resetButtonText = 'Deleting...';
+  } else if (isCreating) {
+    resetButtonText = 'Cancel';
+  }
 
   return `<form class="event event--edit" action="#" method="post">
     <header class="event__header">
@@ -161,14 +172,14 @@ const createEditingFormTemplate = (point, destination, allDestinations, allOffer
           <span class="visually-hidden">Price</span>
           &euro;
         </label>
-        <input class="event__input event__input--price"
-                id="event-price-1"
-                type="number"
-                name="event-price"
-                value="${basePrice}"
-                min="0"
-                step="1"
-                placeholder="0">
+        <input
+          class="event__input event__input--price"
+          id="event-price-1"
+          type="text"
+          name="event-price"
+          value="${basePrice}"
+          pattern="[0-9]*"
+        >
       </div>
 
       <button class="event__save-btn btn btn--blue" type="submit" ${isDisabled ? 'disabled' : ''}>
@@ -176,7 +187,7 @@ const createEditingFormTemplate = (point, destination, allDestinations, allOffer
       </button>
 
       <button class="event__reset-btn" type="reset" ${isDisabled ? 'disabled' : ''}>
-        ${isDeleting ? 'Deleting...' : isCreating ? 'Cancel' : 'Delete'}
+        ${resetButtonText}
       </button>
       <button class="event__rollup-btn" type="button">
         <span class="visually-hidden">Open event</span>
@@ -290,11 +301,9 @@ export default class EditingFormView extends AbstractStatefulView {
       .addEventListener('click', this.#deleteClickHandler);
 
     this.element
-      .querySelector(
-        '.event__input--destination'
-      )
+      .querySelector('.event__input--destination')
       .addEventListener(
-        'change',
+        'input',
         this.#destinationChangeHandler
       );
 
@@ -380,24 +389,24 @@ export default class EditingFormView extends AbstractStatefulView {
       destination.name === evt.target.value
     );
 
+    if (!selectedDestination) {
+      return;
+    }
+
     this.updateElement({
       point: {
         ...this._state.point,
-        destination: selectedDestination?.id || null
+        destination: selectedDestination.id
       },
-      destination: selectedDestination || null
+      destination: selectedDestination
     });
   };
 
   #priceChangeHandler = (evt) => {
     const value = evt.target.value.replace(/\D/g, '');
 
-    this.updateElement({
-      point: {
-        ...this._state.point,
-        basePrice: Number(value)
-      }
-    });
+    this._state.point.basePrice =
+      value === '' ? '' : Number(value);
   };
 
   #collectOffers() {
@@ -472,9 +481,9 @@ export default class EditingFormView extends AbstractStatefulView {
       isDeleting: false
     };
 
-    this.updateElement(resetState);
-
-    this.shake(resetState);
+    this.shake(() => {
+      this.updateElement(resetState);
+    });
 
   }
 }

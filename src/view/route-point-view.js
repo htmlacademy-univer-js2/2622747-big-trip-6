@@ -17,10 +17,20 @@ const createSelectedOffers = (offers) => {
 const createRoutePointTemplate = (point, destination, offers) => {
   const findDuration = (to, from) => {
     const dur = dayjs(to).diff(dayjs(from), 'minute');
-    const hours = Math.floor(dur / 60);
+
+    const days = Math.floor(dur / (60 * 24));
+    const hours = Math.floor((dur % (60 * 24)) / 60);
     const minutes = dur % 60;
 
-    return hours > 0 ? `${hours}H ${minutes}M` : `${minutes}M`;
+    if (days > 0) {
+      return `${String(days).padStart(2, '0')}D ${String(hours).padStart(2, '0')}H ${String(minutes).padStart(2, '0')}M`;
+    }
+
+    if (hours > 0) {
+      return `${String(hours).padStart(2, '0')}H ${String(minutes).padStart(2, '0')}M`;
+    }
+
+    return `${minutes}M`;
   };
 
   const {type, basePrice, dateFrom, dateTo, isFavorite} = point;
